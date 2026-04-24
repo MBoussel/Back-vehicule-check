@@ -17,9 +17,6 @@ def get_supabase_client() -> Client:
             detail="Supabase configuration is missing in .env",
         )
 
-    print("SUPABASE URL:", settings.supabase_url)
-    print("SUPABASE KEY:", settings.supabase_key)
-
     return create_client(settings.supabase_url, settings.supabase_key)
 
 
