@@ -265,7 +265,6 @@ def build_vehicle_block(check: Check, styles) -> list[Any]:
                 ["Modèle", safe_text(vehicle.model)],
                 ["Immatriculation", safe_text(vehicle.plate_number)],
                 ["Carburant véhicule", format_enum_label(vehicle.fuel_type)],
-                ["Kilométrage actuel", safe_text(vehicle.current_mileage)],
             ]
         )
     )
