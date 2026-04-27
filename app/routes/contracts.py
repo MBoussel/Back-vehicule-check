@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
+from datetime import datetime
 
 from app.db.database import get_db
-from datetime import datetime
 from app.models.rental_contract import RentalContract
 from app.models.vehicle import Vehicle
 from app.schemas.rental_contract import (
@@ -12,6 +12,9 @@ from app.schemas.rental_contract import (
 )
 
 router = APIRouter(prefix="/contracts", tags=["Contracts"])
+
+
+# ✅ Génération auto CTR-YYYY-LOC-X
 def generate_contract_number(db: Session) -> str:
     year = datetime.utcnow().year
 
@@ -32,6 +35,7 @@ def generate_contract_number(db: Session) -> str:
             next_number = 1
 
     return f"CTR-{year}-LOC-{next_number}"
+
 
 def _get_vehicle_or_404(db: Session, vehicle_id: int) -> Vehicle:
     vehicle = db.get(Vehicle, vehicle_id)
@@ -59,19 +63,21 @@ def _copy_vehicle_financial_defaults(
     return data
 
 
+# ✅ CREATE
 @router.post("/", response_model=RentalContractResponse)
 def create_contract(payload: RentalContractCreate, db: Session = Depends(get_db)):
 
     contract_data = payload.model_dump()
 
-    # 🔥 génération auto si absent ou TEMP
-    if not contract_data.get("contract_number") or contract_data["contract_number"] == "TEMP":
-        contract_data["contract_number"] = generate_contract_number(db)
+    contract_number = contract_data.get("contract_number")
 
+    # 🔥 FIX ICI → gère TEMP, TEMP-xxx, null
+    if not contract_number or contract_number.startswith("TEMP"):
+        contract_data["contract_number"] = generate_contract_number(db)
     else:
         existing_contract = (
             db.query(RentalContract)
-            .filter(RentalContract.contract_number == contract_data["contract_number"])
+            .filter(RentalContract.contract_number == contract_number)
             .first()
         )
         if existing_contract:
@@ -90,6 +96,7 @@ def create_contract(payload: RentalContractCreate, db: Session = Depends(get_db)
     return db_contract
 
 
+# ✅ GET ALL
 @router.get("/", response_model=list[RentalContractResponse])
 def get_contracts(db: Session = Depends(get_db)):
     return (
@@ -100,6 +107,7 @@ def get_contracts(db: Session = Depends(get_db)):
     )
 
 
+# ✅ GET ONE
 @router.get("/{contract_id}", response_model=RentalContractResponse)
 def get_contract(contract_id: int, db: Session = Depends(get_db)):
     contract = (
@@ -118,6 +126,7 @@ def get_contract(contract_id: int, db: Session = Depends(get_db)):
     return contract
 
 
+# ✅ UPDATE
 @router.put("/{contract_id}", response_model=RentalContractResponse)
 def update_contract(
     contract_id: int,
@@ -140,7 +149,7 @@ def update_contract(
             )
             .first()
         )
-        if existing_contract is not None:
+        if existing_contract:
             raise HTTPException(status_code=400, detail="Contract number already exists")
 
     if "vehicle_id" in update_data:
@@ -161,6 +170,7 @@ def update_contract(
     return contract
 
 
+# ✅ DELETE
 @router.delete("/{contract_id}")
 def delete_contract(contract_id: int, db: Session = Depends(get_db)):
     contract = db.get(RentalContract, contract_id)
