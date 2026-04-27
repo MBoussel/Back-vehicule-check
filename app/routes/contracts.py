@@ -14,25 +14,25 @@ from app.schemas.rental_contract import (
 router = APIRouter(prefix="/contracts", tags=["Contracts"])
 
 
-# ✅ Génération auto CTR-YYYY-LOC-X
 def generate_contract_number(db: Session) -> str:
     year = datetime.utcnow().year
 
-    last_contract = (
-        db.query(RentalContract)
+    contracts = (
+        db.query(RentalContract.contract_number)
         .filter(RentalContract.contract_number.like(f"CTR-{year}-LOC-%"))
-        .order_by(RentalContract.id.desc())
-        .first()
+        .all()
     )
 
-    if not last_contract:
-        next_number = 1
-    else:
+    numbers = []
+
+    for contract in contracts:
         try:
-            last_number = int(last_contract.contract_number.split("-")[-1])
-            next_number = last_number + 1
+            number = int(contract.contract_number.split("-")[-1])
+            numbers.append(number)
         except Exception:
-            next_number = 1
+            continue
+
+    next_number = max(numbers) + 1 if numbers else 1
 
     return f"CTR-{year}-LOC-{next_number}"
 
