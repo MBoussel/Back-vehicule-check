@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 
 from app.db.database import get_db
+from datetime import datetime
 from app.models.rental_contract import RentalContract
 from app.models.vehicle import Vehicle
 from app.schemas.rental_contract import (
@@ -11,7 +12,26 @@ from app.schemas.rental_contract import (
 )
 
 router = APIRouter(prefix="/contracts", tags=["Contracts"])
+def generate_contract_number(db: Session) -> str:
+    year = datetime.utcnow().year
 
+    last_contract = (
+        db.query(RentalContract)
+        .filter(RentalContract.contract_number.like(f"CTR-{year}-LOC-%"))
+        .order_by(RentalContract.id.desc())
+        .first()
+    )
+
+    if not last_contract:
+        next_number = 1
+    else:
+        try:
+            last_number = int(last_contract.contract_number.split("-")[-1])
+            next_number = last_number + 1
+        except Exception:
+            next_number = 1
+
+    return f"CTR-{year}-LOC-{next_number}"
 
 def _get_vehicle_or_404(db: Session, vehicle_id: int) -> Vehicle:
     vehicle = db.get(Vehicle, vehicle_id)
@@ -41,17 +61,24 @@ def _copy_vehicle_financial_defaults(
 
 @router.post("/", response_model=RentalContractResponse)
 def create_contract(payload: RentalContractCreate, db: Session = Depends(get_db)):
-    existing_contract = (
-        db.query(RentalContract)
-        .filter(RentalContract.contract_number == payload.contract_number)
-        .first()
-    )
-    if existing_contract is not None:
-        raise HTTPException(status_code=400, detail="Contract number already exists")
+
+    contract_data = payload.model_dump()
+
+    # 🔥 génération auto si absent ou TEMP
+    if not contract_data.get("contract_number") or contract_data["contract_number"] == "TEMP":
+        contract_data["contract_number"] = generate_contract_number(db)
+
+    else:
+        existing_contract = (
+            db.query(RentalContract)
+            .filter(RentalContract.contract_number == contract_data["contract_number"])
+            .first()
+        )
+        if existing_contract:
+            raise HTTPException(status_code=400, detail="Contract number already exists")
 
     vehicle = _get_vehicle_or_404(db, payload.vehicle_id)
 
-    contract_data = payload.model_dump()
     contract_data = _copy_vehicle_financial_defaults(contract_data, vehicle)
 
     db_contract = RentalContract(**contract_data)

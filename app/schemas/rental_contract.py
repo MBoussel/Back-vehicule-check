@@ -65,7 +65,7 @@ class RentalContractCreate(RentalContractBase):
 
 
 class RentalContractUpdate(BaseModel):
-    contract_number: Optional[str] = None
+    contract_number: str
     vehicle_id: Optional[int] = None
 
     customer_first_name: Optional[str] = None
