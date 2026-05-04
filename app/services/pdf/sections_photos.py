@@ -43,7 +43,7 @@ def build_single_damage_table(photo) -> Table:
     return table
 
 
-def build_photo_cell(photo, title: str, styles) -> list[Any]:
+def build_photo_cell(photo, title: str, styles, reference_photo=None) -> list[Any]:
     photo_text_style = styles["Normal"]
     photo_title_style = ParagraphStyle(
         "PhotoCellTitle",
@@ -58,7 +58,16 @@ def build_photo_cell(photo, title: str, styles) -> list[Any]:
     content: list[Any] = [Paragraph(title, photo_title_style), Spacer(1, 0.12 * cm)]
 
     if photo is None:
-        content.append(Paragraph("Photo indisponible.", photo_text_style))
+        if title == "Retour" and reference_photo is not None:
+            content.append(
+                Paragraph(
+                    "Aucun dégât constaté par rapport au check de départ. Photo retour non requise.",
+                    photo_text_style,
+                )
+            )
+        else:
+            content.append(Paragraph("Photo indisponible.", photo_text_style))
+
         return content
 
     annotated_buffer = annotate_photo_with_damages(photo)
@@ -119,7 +128,12 @@ def build_photo_comparison_grid(
     elements.append(build_section_title("Comparaison visuelle départ / retour", styles))
 
     if previous_departure is None:
-        elements.append(Paragraph("Aucun check de départ disponible pour la comparaison.", styles["Normal"]))
+        elements.append(
+            Paragraph(
+                "Aucun check de départ disponible pour la comparaison.",
+                styles["Normal"],
+            )
+        )
         elements.append(Spacer(1, 0.3 * cm))
         return elements
 
@@ -160,7 +174,17 @@ def build_photo_comparison_grid(
         return_photo = return_photos.get(photo_type)
 
         compare_table = Table(
-            [[build_photo_cell(departure_photo, "Départ", styles), build_photo_cell(return_photo, "Retour", styles)]],
+            [
+                [
+                    build_photo_cell(departure_photo, "Départ", styles),
+                    build_photo_cell(
+                        return_photo,
+                        "Retour",
+                        styles,
+                        reference_photo=departure_photo,
+                    ),
+                ]
+            ],
             colWidths=[8.0 * cm, 8.0 * cm],
         )
         compare_table.setStyle(
@@ -207,7 +231,11 @@ def build_photo_grid(check: Check, styles) -> list[Any]:
         return elements
 
     for photo in sorted_photos:
-        raw_label = getattr(photo.photo_type, "name", None) or getattr(photo.photo_type, "value", str(photo.photo_type))
+        raw_label = getattr(photo.photo_type, "name", None) or getattr(
+            photo.photo_type,
+            "value",
+            str(photo.photo_type),
+        )
         title = Paragraph(translate_photo_label(raw_label), photo_title_style)
         elements.append(title)
 
