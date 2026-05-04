@@ -12,7 +12,6 @@ from app.models.vehicle import Vehicle
 from app.routes.auth import get_current_user
 from app.schemas.check import CheckCreate, CheckResponse
 from app.services.check_comparator import compare_checks
-from app.services.check_photo_rules import validate_check_required_photos
 from app.services.pdf import generate_check_pdf
 
 router = APIRouter(prefix="/checks", tags=["Checks"])
@@ -113,11 +112,6 @@ def complete_check(
         raise HTTPException(status_code=404, detail="Check not found")
 
     check.status = CheckStatus.COMPLETED
-
-    try:
-        validate_check_required_photos(check)
-    except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error)) from error
 
     db.commit()
     db.refresh(check)
@@ -256,7 +250,10 @@ def generate_check_state_pdf(
 
     pdf_path = generate_check_pdf(check, previous_departure)
 
-    filename = f"etat-des-lieux-check-{check.id}.pdf"
+    if check.contract:
+        filename = f"{check.contract.contract_number}.pdf"
+    else:
+        filename = f"etat-des-lieux-check-{check.id}.pdf"
 
     return FileResponse(
         path=pdf_path,
