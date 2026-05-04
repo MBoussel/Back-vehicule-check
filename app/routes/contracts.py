@@ -34,7 +34,7 @@ def generate_contract_number(db: Session) -> str:
 
     next_number = max(numbers) + 1 if numbers else 1
 
-    return f"CTR-{year}-LOC-{next_number}"
+    return f"MCR-CTR-{year}-LOC-{next_number}"
 
 
 def _get_vehicle_or_404(db: Session, vehicle_id: int) -> Vehicle:
