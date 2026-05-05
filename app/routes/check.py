@@ -249,12 +249,13 @@ def generate_check_state_pdf(
                 .first()
             )
 
-    
+    try:
         pdf_path = generate_check_pdf(check, previous_departure)
-
-    print("CONTRACT:", check.contract)
-    print("CONTRACT ID:", check.contract_id)
-    print("TYPE:", check.type_check)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"PDF generation failed: {str(e)}",
+        )
 
     if check.contract:
         contract_name = check.contract.contract_number
@@ -266,4 +267,8 @@ def generate_check_state_pdf(
     else:
         filename = f"etat-des-lieux-check-{check.id}.pdf"
 
-    print("FILENAME:", filename)
+    return FileResponse(
+        path=pdf_path,
+        media_type="application/pdf",
+        filename=filename,
+    )
