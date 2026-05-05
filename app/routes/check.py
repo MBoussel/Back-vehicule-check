@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session, joinedload
+from pathlib import Path
 
 from app.db.database import get_db
 from app.models.check import Check
@@ -248,10 +249,21 @@ def generate_check_state_pdf(
                 .first()
             )
 
-    pdf_path = generate_check_pdf(check, previous_departure)
+    try:
+        pdf_path = generate_check_pdf(check, previous_departure)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"PDF generation failed: {str(e)}",
+        )
 
     if check.contract:
-        filename = f"{check.contract.contract_number}.pdf"
+        contract_name = check.contract.contract_number
+
+        if check.type_check == CheckType.DEPARTURE:
+            filename = f"{contract_name}-Departure.pdf"
+        else:
+            filename = f"{contract_name}.pdf"
     else:
         filename = f"etat-des-lieux-check-{check.id}.pdf"
 
