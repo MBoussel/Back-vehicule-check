@@ -139,7 +139,23 @@ def build_financial_block(check: Check, styles) -> list[Any]:
 
     deposit_amount = getattr(contract, "deposit_amount", None) if contract else None
     franchise_amount = getattr(contract, "franchise_amount", None) if contract else None
-    included_km = getattr(vehicle, "included_km", None)
+
+    included_km_per_day = getattr(vehicle, "included_km", None)
+
+    included_km = "-"
+    if included_km_per_day is not None and contract is not None:
+        try:
+            rental_days = (contract.end_date.date() - contract.start_date.date()).days
+
+            if rental_days <= 0:
+                rental_days = 1
+
+            included_km = int(included_km_per_day) * rental_days
+        except Exception:
+            included_km = included_km_per_day
+    else:
+        included_km = included_km_per_day
+
     extra_km_price = getattr(vehicle, "extra_km_price", None)
     immobilization_fee_per_day = getattr(vehicle, "immobilization_fee_per_day", None)
     key_loss_fee = getattr(vehicle, "key_loss_fee", None)
