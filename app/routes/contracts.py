@@ -19,7 +19,7 @@ def generate_contract_number(db: Session) -> str:
 
     contracts = (
         db.query(RentalContract.contract_number)
-        .filter(RentalContract.contract_number.like(f"CTR-{year}-LOC-%"))
+        .filter(RentalContract.contract_number.like(f"MCR-CTR-{year}-LOC-%"))
         .all()
     )
 
