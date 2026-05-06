@@ -26,8 +26,7 @@ class RentalContractBase(BaseModel):
     customer_email: Optional[str] = None
     customer_phone: Optional[str] = None
     customer_address: Optional[str] = None
-
-    license_number: str
+    license_number: Optional[str] = None
     license_issue_date: Optional[date] = None
     license_country: Optional[str] = None
     license_front_photo_url: Optional[str] = None

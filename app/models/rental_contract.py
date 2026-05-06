@@ -37,7 +37,10 @@ class RentalContract(Base):
     customer_phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
     customer_address: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
-    license_number: Mapped[str] = mapped_column(String(100), nullable=False)
+    license_number: Mapped[str | None] = mapped_column(
+    String(100),
+    nullable=True,
+)
     license_issue_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     license_country: Mapped[str | None] = mapped_column(String(100), nullable=True)
     license_front_photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
