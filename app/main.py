@@ -13,6 +13,7 @@ from app.routes.signature import router as signature_router
 from app.routes.upload import router as upload_router
 from app.routes.user import router as user_router
 from app.routes.vehicle import router as vehicle_router
+from app.routes import contract_closures
 
 
 
@@ -53,6 +54,7 @@ app.include_router(auth_router)
 app.include_router(upload_router)
 app.include_router(signature_router)
 app.include_router(contracts_router)
+app.include_router(contract_closures.router)
 
 @app.get("/")
 def read_root():

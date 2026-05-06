@@ -8,6 +8,7 @@ from sqlalchemy import Date, DateTime, ForeignKey, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
+from app.models.contract_closure import ContractClosure
 
 if TYPE_CHECKING:
     from app.models.check import Check
@@ -87,6 +88,12 @@ class RentalContract(Base):
 
     vehicle: Mapped["Vehicle"] = relationship(back_populates="contracts")
     checks: Mapped[list["Check"]] = relationship(back_populates="contract")
+
+    closure: Mapped["ContractClosure | None"] = relationship(
+    back_populates="contract",
+    uselist=False,
+    cascade="all, delete-orphan",
+)
 
     def __repr__(self) -> str:
         return f"<RentalContract id={self.id} contract_number={self.contract_number}>"
