@@ -20,6 +20,15 @@ class ContractCheckSummary(BaseModel):
 class RentalContractBase(BaseModel):
     contract_number: str
     vehicle_id: int
+    source: str = "internal"
+    is_external: bool = False
+    external_platform_reference: Optional[str] = None
+
+    platform_fee: Optional[Decimal] = None
+    net_revenue: Optional[Decimal] = None
+
+    external_start_mileage: Optional[int] = None
+    external_end_mileage: Optional[int] = None
 
     customer_first_name: str
     customer_last_name: str
@@ -66,6 +75,16 @@ class RentalContractCreate(RentalContractBase):
 class RentalContractUpdate(BaseModel):
     contract_number: str
     vehicle_id: Optional[int] = None
+
+    source: Optional[str] = None
+    is_external: Optional[bool] = None
+    external_platform_reference: Optional[str] = None
+
+    platform_fee: Optional[Decimal] = None
+    net_revenue: Optional[Decimal] = None
+
+    external_start_mileage: Optional[int] = None
+    external_end_mileage: Optional[int] = None
 
     customer_first_name: Optional[str] = None
     customer_last_name: Optional[str] = None

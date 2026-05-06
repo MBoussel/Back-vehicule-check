@@ -31,7 +31,16 @@ class RentalContract(Base):
         ForeignKey("vehicles.id", ondelete="RESTRICT"),
         nullable=False,
     )
+    source: Mapped[str] = mapped_column(String(50), nullable=False, default="internal")
+    is_external: Mapped[bool] = mapped_column(nullable=False, default=False)
+    external_platform_reference: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
+    platform_fee: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True, default=0)
+    net_revenue: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True, default=0)
+
+    external_start_mileage: Mapped[int | None] = mapped_column(nullable=True)
+    external_end_mileage: Mapped[int | None] = mapped_column(nullable=True)
+    
     customer_first_name: Mapped[str] = mapped_column(String(100), nullable=False)
     customer_last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     customer_email: Mapped[str | None] = mapped_column(String(150), nullable=True)
