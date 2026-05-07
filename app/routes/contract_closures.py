@@ -29,7 +29,7 @@ def _get_rental_days(start_date: datetime, end_date: datetime) -> int:
     return max(days, 1)
 
 
-def _get_completed_checks(db: Session, contract_id: int):
+def _get_completed_checks(db: Session, contract_id: int) -> tuple[Check, Check]:
     departure = (
         db.query(Check)
         .filter(
@@ -61,16 +61,45 @@ def _get_completed_checks(db: Session, contract_id: int):
     return departure, return_check
 
 
+def _get_base_revenue(contract: RentalContract) -> Decimal:
+    """
+    For internal contracts, the base revenue is the rental price.
+    For external contracts, the base revenue is the net revenue after platform fees.
+    """
+    if getattr(contract, "is_external", False):
+        net_revenue = getattr(contract, "net_revenue", None)
+
+        if net_revenue is not None:
+            return _money(net_revenue)
+
+        rental_price = _money(getattr(contract, "rental_price", None))
+        platform_fee = _money(getattr(contract, "platform_fee", None))
+        return rental_price - platform_fee
+
+    return _money(getattr(contract, "rental_price", None))
+
+
 def _calculate_closure_data(
     contract: RentalContract,
-    departure: Check,
-    return_check: Check,
+    departure: Check | None,
+    return_check: Check | None,
     payload: ContractClosureCreate | ContractClosureUpdate,
 ):
     rental_days = _get_rental_days(contract.start_date, contract.end_date)
 
-    departure_mileage = int(departure.mileage or 0)
-    return_mileage = int(return_check.mileage or 0)
+    if getattr(contract, "is_external", False):
+        departure_mileage = int(getattr(contract, "external_start_mileage", None) or 0)
+        return_mileage = int(getattr(contract, "external_end_mileage", None) or 0)
+    else:
+        if departure is None or return_check is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Departure and return checks are required",
+            )
+
+        departure_mileage = int(departure.mileage or 0)
+        return_mileage = int(return_check.mileage or 0)
+
     driven_km = max(return_mileage - departure_mileage, 0)
 
     included_km_per_day = getattr(contract.vehicle, "included_km", None) or 0
@@ -78,7 +107,7 @@ def _calculate_closure_data(
 
     extra_km = max(driven_km - included_km, 0)
 
-    rental_price = _money(contract.rental_price)
+    base_revenue = _get_base_revenue(contract)
 
     extra_km_fee = _money(getattr(payload, "extra_km_fee", None))
     fuel_fee = _money(getattr(payload, "fuel_fee", None))
@@ -88,7 +117,7 @@ def _calculate_closure_data(
     discount_amount = _money(getattr(payload, "discount_amount", None))
 
     final_total = (
-        rental_price
+        base_revenue
         + extra_km_fee
         + fuel_fee
         + cleaning_fee
@@ -104,7 +133,7 @@ def _calculate_closure_data(
         "driven_km": driven_km,
         "included_km": included_km,
         "extra_km": extra_km,
-        "rental_price": rental_price,
+        "rental_price": base_revenue,
         "extra_km_fee": extra_km_fee,
         "fuel_fee": fuel_fee,
         "cleaning_fee": cleaning_fee,
@@ -156,7 +185,12 @@ def create_contract_closure(
     if existing_closure is not None:
         raise HTTPException(status_code=400, detail="Contract closure already exists")
 
-    departure, return_check = _get_completed_checks(db, contract_id)
+    departure = None
+    return_check = None
+
+    if not getattr(contract, "is_external", False):
+        departure, return_check = _get_completed_checks(db, contract_id)
+
     closure_data = _calculate_closure_data(contract, departure, return_check, payload)
 
     closure = ContractClosure(
@@ -196,7 +230,11 @@ def update_contract_closure(
     if closure is None:
         raise HTTPException(status_code=404, detail="Contract closure not found")
 
-    departure, return_check = _get_completed_checks(db, contract_id)
+    departure = None
+    return_check = None
+
+    if not getattr(contract, "is_external", False):
+        departure, return_check = _get_completed_checks(db, contract_id)
 
     current_payload = ContractClosureUpdate(
         extra_km_fee=payload.extra_km_fee if payload.extra_km_fee is not None else closure.extra_km_fee,
