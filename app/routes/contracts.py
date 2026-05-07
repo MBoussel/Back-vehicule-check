@@ -66,12 +66,14 @@ def _copy_vehicle_financial_defaults(
 # ✅ CREATE
 @router.post("/", response_model=RentalContractResponse)
 def create_contract(payload: RentalContractCreate, db: Session = Depends(get_db)):
-
+    print("START REÇU:", payload.start_date)
+    print("START TZ:", payload.start_date.tzinfo)
+    print("END REÇU:", payload.end_date)
+    print("END TZ:", payload.end_date.tzinfo)
     contract_data = payload.model_dump()
 
     contract_number = contract_data.get("contract_number")
 
-    # 🔥 FIX ICI → gère TEMP, TEMP-xxx, null
     if not contract_number or contract_number.startswith("TEMP"):
         contract_data["contract_number"] = generate_contract_number(db)
     else:
