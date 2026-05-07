@@ -1,4 +1,5 @@
 from __future__ import annotations
+from zoneinfo import ZoneInfo
 
 from app.models.check import Check
 
@@ -95,8 +96,10 @@ def safe_text(value) -> str:
 def format_datetime_fr(value) -> str:
     if value is None:
         return "-"
+
     try:
-        return value.strftime("%d/%m/%Y à %H:%M")
+        paris_date = value.astimezone(ZoneInfo("Europe/Paris"))
+        return paris_date.strftime("%d/%m/%Y à %H:%M")
     except Exception:
         return str(value)
 
