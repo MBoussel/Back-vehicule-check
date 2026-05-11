@@ -45,23 +45,22 @@ async def upload_check_photo(
         raise HTTPException(status_code=404, detail="Check not found")
 
     existing_photo = (
-        db.query(CheckPhoto)
-        .filter(
-            CheckPhoto.check_id == check_id,
-            CheckPhoto.photo_type == photo_type,
-        )
-        .first()
+    db.query(CheckPhoto)
+    .filter(
+        CheckPhoto.check_id == check_id,
+        CheckPhoto.photo_type == photo_type,
     )
-    if existing_photo is not None:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                f"A photo already exists for step '{photo_type.value}'. "
-                "Delete it before uploading a new one."
-            ),
-        )
+    .first()
+)
 
-    upload_result = await upload_file_to_supabase(file=file, folder="checks")
+    if existing_photo is not None:
+        db.delete(existing_photo)
+    db.commit()
+
+    upload_result = await upload_file_to_supabase(
+    file=file,
+    folder="checks",
+)
 
     db_photo = CheckPhoto(
         check_id=check_id,
