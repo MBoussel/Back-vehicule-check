@@ -39,11 +39,11 @@ def create_check(
                 detail="This contract is not linked to the selected vehicle",
             )
 
-    if payload.mileage < vehicle.current_mileage:
-        raise HTTPException(
-            status_code=400,
-            detail="Mileage cannot be lower than current vehicle mileage",
-        )
+    if payload.mileage < 0:
+     raise HTTPException(
+        status_code=400,
+        detail="Mileage cannot be negative",
+    )
 
     db_check = Check(
         vehicle_id=payload.vehicle_id,
@@ -61,7 +61,11 @@ def create_check(
 
     db.add(db_check)
 
-    vehicle.current_mileage = payload.mileage
+    if (
+    payload.status == CheckStatus.COMPLETED
+    and payload.mileage > vehicle.current_mileage
+):
+     vehicle.current_mileage = payload.mileage
 
     if payload.type_check == CheckType.DEPARTURE:
         vehicle.status = VehicleStatus.RENTED
