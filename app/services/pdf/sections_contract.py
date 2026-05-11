@@ -363,11 +363,11 @@ def build_comparison_block(check: Check, previous_departure: Check | None, style
             safe_text(comparison.get("km_diff")),
         ],
         [
-            "Carburant",
-            safe_text(comparison.get("departure_fuel_level")),
-            safe_text(comparison.get("return_fuel_level")),
-            f"{safe_text(comparison.get('fuel_diff'))} %",
-        ],
+    "Carburant",
+    format_enum_label(comparison.get("departure_fuel_level")),
+    format_enum_label(comparison.get("return_fuel_level")),
+    f"{safe_text(comparison.get('fuel_diff'))} %",
+],
         [
             "Propreté",
             safe_text(comparison.get("departure_cleanliness")),
