@@ -13,14 +13,19 @@ def fuel_to_percent(fuel_level) -> int:
         return 0
 
     fuel_map = {
-        "FULL": 100,
-        "THREE_QUARTERS": 75,
-        "HALF": 50,
-        "QUARTER": 25,
-        "RESERVE": 5,
+        "one_eighth": 12,
+        "two_eighths": 25,
+        "three_eighths": 37,
+        "half": 50,
+        "five_eighths": 62,
+        "six_eighths": 75,
+        "seven_eighths": 87,
+        "full": 100,
     }
 
-    return fuel_map.get(getattr(fuel_level, "name", ""), 0)
+    value = getattr(fuel_level, "value", fuel_level)
+
+    return fuel_map.get(str(value).lower(), 0)
 
 
 def compare_checks(depart: Check, retour: Check) -> dict:

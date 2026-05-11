@@ -45,9 +45,13 @@ class Check(Base):
     )
     mileage: Mapped[int] = mapped_column(Integer, nullable=False)
     fuel_level: Mapped[FuelLevel] = mapped_column(
-        Enum(FuelLevel, name="fuel_level_enum"),
-        nullable=False,
-    )
+    Enum(
+        FuelLevel,
+        name="fuel_level_enum",
+        values_callable=lambda enum_class: [e.value for e in enum_class],
+    ),
+    nullable=False,
+)
     cleanliness: Mapped[CleanlinessLevel] = mapped_column(
         Enum(CleanlinessLevel, name="cleanliness_level_enum"),
         nullable=False,
