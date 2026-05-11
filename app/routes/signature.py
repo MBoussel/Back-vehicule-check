@@ -12,6 +12,7 @@ from app.models.user import User
 from app.routes.auth import get_current_user
 from app.schemas.signature import SignatureUploadRequest, SignatureUploadResponse
 from app.services.supabase_storage import upload_bytes_to_supabase
+from app.models.enums import CheckStatus
 
 router = APIRouter(prefix="/checks", tags=["Signatures"])
 
@@ -98,6 +99,8 @@ def upload_check_signature(
 
     if check.contract is not None:
         check.contract.status = "signed"
+    if check.signature_url and check.agent_signature_url:
+        check.status = CheckStatus.COMPLETED  
 
     db.commit()
     db.refresh(check)
@@ -140,6 +143,12 @@ def upload_agent_signature(
         raise HTTPException(status_code=500, detail="Upload failed")
 
     check.agent_signature_url = file_url
+
+    if check.signature_url and check.agent_signature_url:
+        check.status = CheckStatus.COMPLETED
+
+    db.commit()
+    db.refresh(check)
 
     db.commit()
     db.refresh(check)
