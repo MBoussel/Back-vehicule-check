@@ -162,12 +162,13 @@ def normalize_damage_type_label(damage) -> str:
         normalized = normalized.split(".")[-1]
 
     mapping = {
-        "scratch": "Rayure",
-        "dent": "Bosse",
-        "crack": "Fissure",
-        "broken": "Cassé",
-        "other": "Autre",
-    }
+    "scratch": "Rayure",
+    "impact": "Impact",
+    "dent": "Bosse",
+    "crack": "Fissure",
+    "broken": "Cassé",
+    "other": "Autre",
+}
 
     return mapping.get(normalized, "Autre")
 

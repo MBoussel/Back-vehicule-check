@@ -66,7 +66,14 @@ class PhotoType(str, enum.Enum):
     DASHBOARD = "dashboard"
     OTHER = "other"
 
-
+class DamageType(str, enum.Enum):
+    SCRATCH = "scratch"
+    IMPACT = "impact"
+    DENT = "dent"
+    CRACK = "crack"
+    BROKEN = "broken"
+    OTHER = "other"
+    
 class DamageSeverity(str, enum.Enum):
     MINOR = "minor"
     MODERATE = "moderate"
