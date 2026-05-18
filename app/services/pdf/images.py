@@ -134,3 +134,32 @@ def annotate_photo_with_damages(photo) -> io.BytesIO | None:
             draw.text(text_pos, text, fill=(255, 255, 255, 255))
 
     return optimize_image_buffer(img)
+from reportlab.platypus import Flowable
+
+
+class ClickableImage(Flowable):
+    def __init__(self, image, url):
+        super().__init__()
+
+        self.image = image
+        self.url = url
+
+        self.width = image.drawWidth
+        self.height = image.drawHeight
+
+    def wrap(self, aW, aH):
+        return self.width, self.height
+
+    def drawOn(self, canvas, x, y, _sW=0):
+        self.image.drawOn(canvas, x, y, _sW)
+
+        canvas.linkURL(
+            self.url,
+            (
+                x,
+                y,
+                x + self.width,
+                y + self.height,
+            ),
+            relative=0,
+        )

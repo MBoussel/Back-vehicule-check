@@ -9,7 +9,7 @@ from reportlab.lib.units import cm
 from reportlab.platypus import Paragraph, Spacer, Table, TableStyle
 
 from app.models.check import Check
-from app.services.pdf.images import annotate_photo_with_damages, create_image
+from app.services.pdf.images import ClickableImage, annotate_photo_with_damages, create_image
 from app.services.pdf.sections_common import build_section_title
 from app.services.pdf.utils import (
     build_damage_summary,
@@ -75,7 +75,7 @@ def build_photo_cell(photo, title: str, styles, reference_photo=None) -> list[An
     if annotated_buffer:
         try:
             img = create_image(annotated_buffer, 7.0 * cm, 4.6 * cm)
-            content.append(img)
+            content.append(ClickableImage(img, photo.file_url))
         except Exception:
             content.append(Paragraph("Image indisponible.", photo_text_style))
     else:
@@ -244,7 +244,7 @@ def build_photo_grid(check: Check, styles) -> list[Any]:
         if annotated_buffer:
             try:
                 img = create_image(annotated_buffer, 13.8 * cm, 7.2 * cm)
-                elements.append(img)
+                elements.append(ClickableImage(img, photo.file_url))
             except Exception:
                 elements.append(Paragraph("Image indisponible", photo_text_style))
         else:
