@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from xml.sax.saxutils import escape
 
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT
@@ -9,7 +10,7 @@ from reportlab.lib.units import cm
 from reportlab.platypus import Paragraph, Spacer, Table, TableStyle
 
 from app.models.check import Check
-from app.services.pdf.images import ClickableImage, annotate_photo_with_damages, create_image
+from app.services.pdf.images import annotate_photo_with_damages, create_image
 from app.services.pdf.sections_common import build_section_title
 from app.services.pdf.utils import (
     build_damage_summary,
@@ -19,6 +20,30 @@ from app.services.pdf.utils import (
     normalize_severity_label,
     translate_photo_label,
 )
+
+
+def build_photo_link(photo, styles) -> Paragraph:
+    link_style = ParagraphStyle(
+        "PhotoHdLink",
+        parent=styles["Normal"],
+        fontName="Helvetica-Bold",
+        fontSize=8,
+        textColor=colors.HexColor("#2563EB"),
+        spaceBefore=4,
+        spaceAfter=2,
+    )
+
+    file_url = getattr(photo, "file_url", None)
+
+    if not file_url:
+        return Paragraph("Lien photo HD indisponible.", styles["Normal"])
+
+    safe_url = escape(str(file_url), {'"': "&quot;"})
+
+    return Paragraph(
+        f'<link href="{safe_url}">Voir la photo HD / zoomer</link>',
+        link_style,
+    )
 
 
 def build_single_damage_table(photo) -> Table:
@@ -75,7 +100,8 @@ def build_photo_cell(photo, title: str, styles, reference_photo=None) -> list[An
     if annotated_buffer:
         try:
             img = create_image(annotated_buffer, 7.0 * cm, 4.6 * cm)
-            content.append(ClickableImage(img, photo.file_url))
+            content.append(img)
+            content.append(build_photo_link(photo, styles))
         except Exception:
             content.append(Paragraph("Image indisponible.", photo_text_style))
     else:
@@ -244,7 +270,8 @@ def build_photo_grid(check: Check, styles) -> list[Any]:
         if annotated_buffer:
             try:
                 img = create_image(annotated_buffer, 13.8 * cm, 7.2 * cm)
-                elements.append(ClickableImage(img, photo.file_url))
+                elements.append(img)
+                elements.append(build_photo_link(photo, styles))
             except Exception:
                 elements.append(Paragraph("Image indisponible", photo_text_style))
         else:
