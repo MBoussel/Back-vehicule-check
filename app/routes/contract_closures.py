@@ -121,7 +121,6 @@ def _calculate_closure_data(
         + extra_km_fee
         + fuel_fee
         + cleaning_fee
-        + damage_fee
         + other_fee
         - discount_amount
     )
