@@ -69,8 +69,29 @@ PHOTO_TRANSLATIONS = {
 def translate_value(raw: str | None) -> str:
     if raw is None or raw == "":
         return "-"
-    key = str(raw).strip().upper()
-    return TRANSLATIONS.get(key, key.replace("_", " ").title())
+
+    key = str(raw).strip()
+
+    upper_key = key.upper()
+    if upper_key in TRANSLATIONS:
+        return TRANSLATIONS[upper_key]
+
+    lower_key = key.lower()
+    lower_translations = {
+        "one_eighth": "1/8 ou 0-13%",
+        "two_eighths": "2/8 ou 14-25%",
+        "three_eighths": "3/8 ou 26-38%",
+        "half": "Moitié ou 39-50%",
+        "five_eighths": "5/8 ou 51-62%",
+        "six_eighths": "6/8 ou 63-74%",
+        "seven_eighths": "7/8 ou 75-89%",
+        "full": "Plein ou 90-100%",
+    }
+
+    if lower_key in lower_translations:
+        return lower_translations[lower_key]
+
+    return upper_key.replace("_", " ").title()
 
 
 def translate_photo_label(raw: str | None) -> str:
