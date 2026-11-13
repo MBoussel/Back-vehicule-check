@@ -46,6 +46,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
     revenue_by_vehicle: dict[str, float] = defaultdict(float)
     net_by_vehicle: dict[str, float] = defaultdict(float)
     damage_fees_by_vehicle: dict[str, float] = defaultdict(float)
+    damage_fee_contracts_by_vehicle: dict[int, list[dict[str, Any]]] = defaultdict(list)
     km_by_vehicle: dict[str, int] = defaultdict(int)
     contracts_by_vehicle: dict[str, int] = defaultdict(int)
 
@@ -105,6 +106,18 @@ def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
             damage_fee = decimal_to_float(contract.closure.damage_fee)
             total_damage_fees += damage_fee
             damage_fees_by_vehicle[vehicle_name] += damage_fee
+            if contract.vehicle is not None and damage_fee > 0:
+                damage_fee_contracts_by_vehicle[contract.vehicle.id].append(
+                    {
+                        "id": contract.id,
+                        "contract_number": contract.contract_number,
+                        "customer_name": f"{contract.customer_first_name} {contract.customer_last_name}".strip(),
+                        "start_date": contract.start_date.isoformat(),
+                        "end_date": contract.end_date.isoformat(),
+                        "damage_fee": round(damage_fee, 2),
+                        "notes": contract.closure.notes,
+                    }
+                )
 
         total_revenue += revenue
         total_net_revenue += net_revenue
@@ -124,6 +137,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
         vehicles_stats.append(
             {
                 "vehicle": vehicle_name,
+                "vehicle_id": vehicle.id,
                 "contracts": contracts_by_vehicle.get(vehicle_name, 0),
                 "revenue": round(
                     revenue_by_vehicle.get(vehicle_name, 0),
@@ -136,6 +150,11 @@ def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
                 "damage_fees": round(
                     damage_fees_by_vehicle.get(vehicle_name, 0),
                     2,
+                ),
+                "damage_fee_contracts": sorted(
+                    damage_fee_contracts_by_vehicle.get(vehicle.id, []),
+                    key=lambda item: item["start_date"],
+                    reverse=True,
                 ),
                 "km": km_by_vehicle.get(vehicle_name, 0),
             }
