@@ -12,6 +12,7 @@ class VehicleBase(BaseModel):
     model: str
     plate_number: str
     fuel_type: FuelType
+    initial_mileage: Optional[int] = None
     current_mileage: int = 0
     status: VehicleStatus = VehicleStatus.AVAILABLE
 
@@ -45,6 +46,7 @@ class VehicleUpdate(BaseModel):
 
 class VehicleResponse(VehicleBase):
     id: int
+    initial_mileage: int
 
     class Config:
         from_attributes = True
