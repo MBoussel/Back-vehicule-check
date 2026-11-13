@@ -10,7 +10,10 @@ router = APIRouter(prefix="/vehicles", tags=["Vehicles"])
 
 @router.post("/", response_model=VehicleResponse)
 def create_vehicle(vehicle: VehicleCreate, db: Session = Depends(get_db)):
-    db_vehicle = Vehicle(**vehicle.model_dump())
+    vehicle_data = vehicle.model_dump()
+    if vehicle_data.get("initial_mileage") is None:
+        vehicle_data["initial_mileage"] = vehicle_data.get("current_mileage", 0)
+    db_vehicle = Vehicle(**vehicle_data)
     db.add(db_vehicle)
     db.commit()
     db.refresh(db_vehicle)
@@ -40,6 +43,8 @@ def update_vehicle(vehicle_id: int, data: VehicleUpdate, db: Session = Depends(g
         raise HTTPException(status_code=404, detail="Vehicle not found")
 
     for key, value in data.model_dump(exclude_unset=True).items():
+        if key == "initial_mileage":
+            continue
         setattr(vehicle, key, value)
 
     db.commit()
