@@ -25,6 +25,7 @@ class Vehicle(Base):
         Enum(FuelType, name="fuel_type_enum"),
         nullable=False,
     )
+    initial_mileage: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     current_mileage: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     status: Mapped[VehicleStatus] = mapped_column(
