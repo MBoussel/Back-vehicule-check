@@ -45,7 +45,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
     source_distribution: dict[str, float] = defaultdict(float)
     revenue_by_vehicle: dict[str, float] = defaultdict(float)
     net_by_vehicle: dict[str, float] = defaultdict(float)
-    damage_fees_by_vehicle: dict[str, float] = defaultdict(float)
+    damage_fees_by_vehicle: dict[int, float] = defaultdict(float)
     damage_fee_contracts_by_vehicle: dict[int, list[dict[str, Any]]] = defaultdict(list)
     km_by_vehicle: dict[str, int] = defaultdict(int)
     contracts_by_vehicle: dict[str, int] = defaultdict(int)
@@ -105,7 +105,8 @@ def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
         if contract.closure is not None and contract.closure.status == "closed":
             damage_fee = decimal_to_float(contract.closure.damage_fee)
             total_damage_fees += damage_fee
-            damage_fees_by_vehicle[vehicle_name] += damage_fee
+            if contract.vehicle is not None:
+                damage_fees_by_vehicle[contract.vehicle.id] += damage_fee
             if contract.vehicle is not None and damage_fee > 0:
                 damage_fee_contracts_by_vehicle[contract.vehicle.id].append(
                     {
@@ -148,7 +149,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
                     2,
                 ),
                 "damage_fees": round(
-                    damage_fees_by_vehicle.get(vehicle_name, 0),
+                    damage_fees_by_vehicle.get(vehicle.id, 0),
                     2,
                 ),
                 "damage_fee_contracts": sorted(
