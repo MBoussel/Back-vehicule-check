@@ -95,8 +95,6 @@ def update_vehicle(vehicle_id: int, data: VehicleUpdate, db: Session = Depends(g
         raise HTTPException(status_code=404, detail="Vehicle not found")
 
     for key, value in data.model_dump(exclude_unset=True).items():
-        if key == "initial_mileage":
-            continue
         setattr(vehicle, key, value)
 
     db.commit()
