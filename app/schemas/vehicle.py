@@ -33,6 +33,7 @@ class VehicleUpdate(BaseModel):
     model: Optional[str] = None
     plate_number: Optional[str] = None
     fuel_type: Optional[FuelType] = None
+    initial_mileage: Optional[int] = None
     current_mileage: Optional[int] = None
     status: Optional[VehicleStatus] = None
 
