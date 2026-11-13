@@ -145,6 +145,21 @@ def _calculate_closure_data(
     }
 
 
+def _sync_vehicle_mileage(contract: RentalContract, closure_data: dict) -> None:
+    """
+    Update the vehicle odometer only once the closure is validated.
+    Never decrease the stored mileage if an older contract is closed later.
+    """
+    if closure_data.get("status") != "closed" or contract.vehicle is None:
+        return
+
+    return_mileage = int(closure_data.get("return_mileage") or 0)
+    current_mileage = int(contract.vehicle.current_mileage or 0)
+
+    if return_mileage > current_mileage:
+        contract.vehicle.current_mileage = return_mileage
+
+
 @router.get("/{contract_id}/closure", response_model=ContractClosureResponse)
 def get_contract_closure(contract_id: int, db: Session = Depends(get_db)):
     closure = (
@@ -198,6 +213,7 @@ def create_contract_closure(
     )
 
     db.add(closure)
+    _sync_vehicle_mileage(contract, closure_data)
     db.commit()
     db.refresh(closure)
 
@@ -251,6 +267,7 @@ def update_contract_closure(
     for key, value in closure_data.items():
         setattr(closure, key, value)
 
+    _sync_vehicle_mileage(contract, closure_data)
     db.commit()
     db.refresh(closure)
 
