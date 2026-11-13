@@ -40,6 +40,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
     total_net_revenue = 0.0
     total_contracts = len(contracts)
     total_km = 0
+    total_damage_fees = 0.0
 
     source_distribution: dict[str, float] = defaultdict(float)
     revenue_by_vehicle: dict[str, float] = defaultdict(float)
@@ -99,6 +100,9 @@ def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
 
             source_distribution["Interne"] += net_revenue
 
+        if contract.closure is not None and contract.closure.status == "closed":
+            total_damage_fees += decimal_to_float(contract.closure.damage_fee)
+
         total_revenue += revenue
         total_net_revenue += net_revenue
         total_km += driven_km
@@ -141,6 +145,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)) -> dict[str, Any]:
             "total_net_revenue": round(total_net_revenue, 2),
             "total_contracts": total_contracts,
             "total_km": total_km,
+            "total_damage_fees": round(total_damage_fees, 2),
         },
         "source_distribution": [
             {
